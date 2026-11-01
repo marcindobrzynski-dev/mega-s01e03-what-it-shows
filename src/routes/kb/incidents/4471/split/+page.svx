@@ -1,0 +1,78 @@
+---
+layout: runbook
+title: '#4471, split · three date problems, not one'
+owner: Marcin Dobrzyński
+status: proposed
+reviewed: 2026-11-01
+signature: Marcin Dobrzyński
+---
+
+<script>
+  import ProblemTable from '#lib/kb/ProblemTable.svelte';
+  import Callout from '#lib/kb/Callout.svelte';
+  import RenderStamp from '#lib/kb/RenderStamp.svelte';
+
+  const repo = 'https://github.com/marcindobrzynski-dev/mega-s01e03-what-it-shows';
+  const issues = { parser: `${repo}/issues/1`, hint: `${repo}/issues/2`, shift: `${repo}/issues/3` };
+</script>
+
+[#4471](/kb/incidents/4471) is marked known: one issue, one fix queued. Its reports say otherwise.
+Read by what each one shows, not by its subject line, they fall into three problems. Each needs
+its own fix, and two of them have no fix queued at all.
+
+<Callout kind="warn">
+The queued parser fix will not close #4471. The <code>hint</code> and <code>shift</code> reports
+will keep coming after it ships.
+</Callout>
+
+## What #4471 holds
+
+<ProblemTable ticket={4471} {issues} />
+
+The export repeats some reports across its pages. Each report is counted once, by id.
+
+## The three problems
+
+**`parser`: the shared parser reads day-first dates month first.** Every tenant on file writes
+the day first. A booking for 7 April comes back as 4 July: day and month swap. It reaches every
+channel: app, email, and the booking-v2 form, whose hint already says `DD/MM/YYYY`. This is the
+bug the queued fix is for.
+
+**`hint`: the booking-v3 form tells people to type the month first.** Its date field prints
+`MM/DD/YYYY`, so people type the month first, and the form then reads the date the tenant's way,
+day first. The swap looks the same as `parser`, but it comes only through the booking-v3 form and
+the parser fix does not touch it. The fix is the hint (or the reading) in booking-v3.
+
+**`shift`: the date moves by one day.** These reports name the right day and month, a day apart
+("Tuesday 12 May, calendar says Monday 11 May"; a client in Lisbon gets Tuesday, a client in
+Toronto Monday). No day-first reading produces that. It points at time-zone handling when an
+invite is built. The current table keeps these under `parser` with a footnote; here they count
+on their own.
+
+## How a report is placed
+
+1. Drop repeats: one id, one report.
+2. A report the desk read as a one-day move (`desk-notes.json`) is `shift`.
+3. Otherwise the tenant decides, as in `causes.ts`: a form report from a booking-v3 tenant is
+   `hint`; any other report from a day-first tenant is `parser`.
+
+Intake's tag is not used. It is a guess from the reporter's browser, and the table shows how
+often it is wrong.
+
+## Why one ticket hid three problems
+
+The desk merges on subject alone ([decision 0001](/kb/decisions/0001-dedupe-by-subject)). People
+describe all three problems with the same words ("wrong day", "date is wrong"), so every report
+landed in #4471 and nobody read the bodies. Decision 0001 accepted that engineering would split
+tickets later; for #4471 that never happened. It needs a new decision record that replaces it;
+0001 itself stays as written.
+
+## What is not proven yet
+
+- `hint` rests on the tenant's form, not on the report text: the bodies of `hint` and `parser`
+  reports read the same. Confirm in the booking-v3 form code before the fix.
+- `shift` is a small group of mixed strength. Some show the move plainly; others only say
+  "one day off", "showed as Monday", or "the invite arrived before I made the booking". Treat it
+  as one investigation into time-zone handling; split it if the cause turns out to differ.
+
+<RenderStamp {signature} />
