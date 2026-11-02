@@ -8,7 +8,7 @@ signature: 'v1.eyJzdWIiOiIyNDE3IiwiYXVkIjoiY2hhbGxlbmdlOndoYXQtaXQtc2hvd3MiLCJpY
 ---
 
 <script>
-  import ProblemTable from '#lib/kb/ProblemTable.svelte';
+  import CauseTable from '#lib/kb/CauseTable.svelte';
   import Callout from '#lib/kb/Callout.svelte';
   import RenderStamp from '#lib/kb/RenderStamp.svelte';
 
@@ -27,9 +27,19 @@ will keep coming after it ships.
 
 ## What #4471 holds
 
-<ProblemTable ticket={4471} {issues} />
+<CauseTable ticket={4471} />
 
+This is the desk's own table, as it was exported: each report sits under the cause its tenant
+gives it, and the reports the desk read as a one-day move stay under `parser` with a footnote.
 The export repeats some reports across its pages. Each report is counted once, by id.
+
+The tickets count differently. Each report is in exactly one ticket, so the one-day reports are
+in the `shift` ticket and not in the `parser` one. That is why the `parser` ticket covers fewer
+reports than the `parser` row above: the difference is the footnote.
+
+- `parser` → <a href={issues.parser}>issue #1</a>
+- `hint` → <a href={issues.hint}>issue #2</a>
+- `shift` → <a href={issues.shift}>issue #3</a>
 
 ## The three problems
 
@@ -41,20 +51,22 @@ bug the queued fix is for.
 **`hint`: the booking-v3 form tells people to type the month first.** Its date field prints
 `MM/DD/YYYY`, so people type the month first, and the form then reads the date the tenant's way,
 day first. The swap looks the same as `parser`, but it comes only through the booking-v3 form and
-the parser fix does not touch it. The fix is the hint (or the reading) in booking-v3.
+the parser fix does not touch it. The fix is the hint (or the reading) in booking-v3. The desk's
+table marks it "not this ticket"; it has one now.
 
 **`shift`: the date moves by one day.** These reports name the right day and month, a day apart
 ("Tuesday 12 May, calendar says Monday 11 May"; a client in Lisbon gets Tuesday, a client in
 Toronto Monday). No day-first reading produces that. It points at time-zone handling when an
-invite is built. The desk's table files these under `parser` with a footnote. They stay counted
-there, so `parser` matches the desk's view, and they count here too, as the problem they show.
+invite is built. The desk's table files these under `parser` with a footnote. The tickets file
+them under `shift` only, as the problem they show.
 
 ## How a report is placed
 
 1. Drop repeats: one id, one report.
 2. The tenant decides, as in `causes.ts`: a form report from a booking-v3 tenant is `hint`; any
-   other report from a day-first tenant is `parser`.
-3. A report the desk read as a one-day move (`desk-notes.json`) also counts as `shift`.
+   other report from a day-first tenant is `parser`. This is the desk's view, and the table above.
+3. A report the desk read as a one-day move (`desk-notes.json`) goes to `shift` instead, and only
+   there. The desk's table keeps it where step 2 put it and footnotes it.
 
 Intake's tag is not used. It is a guess from the reporter's browser, and the table shows how
 often it is wrong.
