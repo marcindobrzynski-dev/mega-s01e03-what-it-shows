@@ -3,7 +3,7 @@ layout: runbook
 title: '#4471, split · three date problems, not one'
 owner: Marcin Dobrzyński
 status: proposed
-reviewed: 2026-11-01
+reviewed: 2026-11-02
 signature: 'v1.eyJzdWIiOiIyNDE3IiwiYXVkIjoiY2hhbGxlbmdlOndoYXQtaXQtc2hvd3MiLCJpYXQiOjE3OTM1NzE3ODUsImV4cCI6MTc5MzY1ODE4NX0.2LKL05OhW4tEiZ_tDE4SfTzE9CYRAZJRkI52VqpG6sw'
 ---
 
@@ -46,15 +46,15 @@ the parser fix does not touch it. The fix is the hint (or the reading) in bookin
 **`shift`: the date moves by one day.** These reports name the right day and month, a day apart
 ("Tuesday 12 May, calendar says Monday 11 May"; a client in Lisbon gets Tuesday, a client in
 Toronto Monday). No day-first reading produces that. It points at time-zone handling when an
-invite is built. The current table keeps these under `parser` with a footnote; here they count
-on their own.
+invite is built. The desk's table files these under `parser` with a footnote. They stay counted
+there, so `parser` matches the desk's view, and they count here too, as the problem they show.
 
 ## How a report is placed
 
 1. Drop repeats: one id, one report.
-2. A report the desk read as a one-day move (`desk-notes.json`) is `shift`.
-3. Otherwise the tenant decides, as in `causes.ts`: a form report from a booking-v3 tenant is
-   `hint`; any other report from a day-first tenant is `parser`.
+2. The tenant decides, as in `causes.ts`: a form report from a booking-v3 tenant is `hint`; any
+   other report from a day-first tenant is `parser`.
+3. A report the desk read as a one-day move (`desk-notes.json`) also counts as `shift`.
 
 Intake's tag is not used. It is a guess from the reporter's browser, and the table shows how
 often it is wrong.

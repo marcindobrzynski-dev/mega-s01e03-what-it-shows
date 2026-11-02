@@ -42,6 +42,13 @@
   </tbody>
 </table>
 
+{#if split.countedTwice}
+  <p class="note">
+    {split.countedTwice} reports read as a one-day move count twice: under <code>shift</code>, and under
+    <code>parser</code> where the desk files them. So the rows add up to more than {split.merged.length}.
+  </p>
+{/if}
+
 <p class="note">
   {mixed.length} of {split.subjects.length} subject lines appear under more than one problem, so matching on
   subject could not keep them apart.

@@ -1,7 +1,8 @@
 // What #4471 holds once each report is placed by what it shows, not by its subject.
 // causes.ts places a report by its tenant and channel; this file adds the reports the desk read
 // as a one-day move (desk-notes.json). They name the right day and month, a day apart, so no
-// day-first reading explains them: they get a problem of their own instead of a footnote.
+// day-first reading explains them: they get a problem of their own. They also stay counted where
+// the desk files them, so `parser` and `hint` match the desk's own view (CauseTable).
 import { causeOf, uniqueById, type Report, type Tenant } from '#lib/kb/causes';
 
 export type Problem = 'parser' | 'hint' | 'shift' | 'unplaced';
@@ -13,9 +14,9 @@ export const PROBLEMS: Record<Problem, string> = {
   unplaced: 'no tenant on file',
 };
 
-export function problemOf(r: Report, t: Tenant | undefined, oneDayMove: readonly string[]): Problem {
-  if (oneDayMove.includes(r.id)) return 'shift';
-  return causeOf(r, t) ?? 'unplaced';
+export function problemsOf(r: Report, t: Tenant | undefined, oneDayMove: readonly string[]): Problem[] {
+  const filed = causeOf(r, t) ?? 'unplaced';
+  return oneDayMove.includes(r.id) ? [filed, 'shift'] : [filed];
 }
 
 export type ProblemGroup = {
@@ -36,12 +37,14 @@ export function splitTicket(
   ticket: number,
   tenantOf: (r: Report) => Tenant | undefined,
   oneDayMove: readonly string[],
-): { merged: Report[]; groups: ProblemGroup[]; subjects: { subject: string; problems: number }[] } {
+): { merged: Report[]; groups: ProblemGroup[]; countedTwice: number; subjects: { subject: string; problems: number }[] } {
   const merged = uniqueById(all).filter((r) => r.mergedInto === ticket);
   const by = new Map<Problem, Report[]>();
+  let countedTwice = 0;
   for (const r of merged) {
-    const p = problemOf(r, tenantOf(r), oneDayMove);
-    by.set(p, [...(by.get(p) ?? []), r]);
+    const ps = problemsOf(r, tenantOf(r), oneDayMove);
+    if (ps.length > 1) countedTwice++;
+    for (const p of ps) by.set(p, [...(by.get(p) ?? []), r]);
   }
   const groups = [...by.entries()]
     .map(([problem, rs]) => {
@@ -69,5 +72,5 @@ export function splitTicket(
     .map(([subject, ps]) => ({ subject, problems: ps.size }))
     .sort((a, b) => b.problems - a.problems || a.subject.localeCompare(b.subject));
 
-  return { merged, groups, subjects };
+  return { merged, groups, countedTwice, subjects };
 }
